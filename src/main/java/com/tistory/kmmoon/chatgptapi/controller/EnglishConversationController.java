@@ -9,6 +9,8 @@ import com.tistory.kmmoon.chatgptapi.session.ConversationSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,8 @@ public class EnglishConversationController {
     private final ChatClient chatClient;
 
     private final ConversationSessionService sessionService;
+
+    private static final int MAX_HISTORY_SIZE = 5;
 
     @PostMapping("/{sessionId}")
     public ResponseEntity<ConversationResponse> conversation(
@@ -72,6 +76,54 @@ public class EnglishConversationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+    /**
+     * 대화 내역 크기를 제한합니다
+     */
+    private void trimConversationHistory(ConversationSession session) {
+        List<Message> messages = session.getConversationHistory();
+
+        // 시스템 메시지를 제외한 사용자 및 어시스턴트 메시지만 계산
+        long nonSystemMessageCount = messages.stream()
+                .filter(msg -> !(msg instanceof SystemMessage))
+                .count();
+
+        // 최대 크기를 초과하면 가장 오래된 메시지부터 제거
+        if (nonSystemMessageCount > MAX_HISTORY_SIZE * 2) { // 사용자와 어시스턴트 메시지 쌍이므로 2배
+            int toRemove = (int) (nonSystemMessageCount - MAX_HISTORY_SIZE * 2);
+
+            // 시스템 메시지를 제외하고 가장 오래된 메시지부터 제거
+            int removed = 0;
+            for (int i = 0; i < messages.size() && removed < toRemove; i++) {
+                if (!(messages.get(i) instanceof SystemMessage)) {
+                    messages.remove(i);
+                    i--; // 인덱스 조정
+                    removed++;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 대화 내역을 조회합니다
+     */
+    @GetMapping("/{sessionId}/history")
+    public ResponseEntity<List<Message>> getConversationHistory(@PathVariable String sessionId) {
+        ConversationSession session = sessionService.getOrCreateSession(sessionId, "", "");
+        return ResponseEntity.ok(session.getConversationHistory());
+    }
+
+    /**
+     * 대화 내역을 초기화합니다
+     */
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<Void> clearConversation(@PathVariable String sessionId) {
+        // 기존 세션을 제거하고 새 세션 생성
+        sessionService.removeSession(sessionId);
+        return ResponseEntity.ok().build();
+    }
+
 
 
     /**

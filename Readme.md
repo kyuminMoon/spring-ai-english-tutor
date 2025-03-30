@@ -96,6 +96,10 @@ GET /api/conversation/{sessionId}/history
 DELETE /api/conversation/{sessionId}
 ```
 
+## 실제 GPT 호출 후 리턴되는 메시지
+
+![img.png](img.png)
+
 ## 🔮 향후 개선 사항
 
 - 데이터베이스 연동으로 대화 내역 영구 저장
