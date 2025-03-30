@@ -104,6 +104,7 @@ DELETE /api/conversation/{sessionId}
 - 더 다양한 시나리오 추가
 - 실시간 발음 평가 기능
 - Claude API 등 타 API도 호출 가능하도록 설정 후 장애 시 서킷브레이커를 사용해 다른 API를 사용하도록 기능 추가
+- 실무 적용에 있어선 HttpClient 관련 설정 튜닝과 로깅도 필요
 
 ---
 
