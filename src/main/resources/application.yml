@@ -1,0 +1,7 @@
+spring:
+  application.name: ChatGPTAPI
+  threads.virtual.enabled: true
+  ai:
+    openai.api-key: {?? API ? ??}
+server:
+  port: 8080
